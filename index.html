@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Abrigo para Pets | SOS Juiz de Fora</title>
+  <meta name="description" content="Cadastre ou encontre abrigo temporário para pets desalojados em Juiz de Fora.">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <style>
+    :root {
+      --primary: #D94B2B;
+      --primary-dark: #B03A1E;
+      --primary-light: #FEF0EC;
+      --amber: #F59E0B;
+      --green: #16A34A;
+      --green-bg: #F0FDF4;
+      --wa: #25D366;
+      --wa-dark: #128C7E;
+      --bg: #F5F5F5;
+      --card: #FFFFFF;
+      --text: #1A1A1A;
+      --muted: #6B7280;
+      --border: #E5E7EB;
+      --danger: #DC2626;
+      --danger-bg: #FEF2F2;
+      --radius: 12px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    .header {
+      background: var(--primary);
+      color: white;
+      padding: 16px;
+      text-align: center;
+    }
+    .header-back {
+      font-size: 13px;
+      opacity: 0.8;
+      margin-bottom: 6px;
+    }
+    .header h1 {
+      font-size: 21px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .header p {
+      font-size: 13px;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+
+    /* ── Alert ───────────────────────────────────────────────── */
+    .alert {
+      background: #FFFBEB;
+      border-left: 4px solid var(--amber);
+      padding: 11px 16px;
+      font-size: 13px;
+      color: #78350F;
+    }
+
+    /* ── Stats bar ───────────────────────────────────────────── */
+    .stats {
+      background: white;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0;
+    }
+    .stat { text-align: center; }
+    .stat-n {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1;
+    }
+    .stat-l {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── Tabs ────────────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      background: white;
+      border-bottom: 2px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .tab {
+      flex: 1;
+      padding: 13px 8px;
+      border: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      background: none;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+    .tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    /* ── Main wrapper ────────────────────────────────────────── */
+    main {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* ── Card section ────────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    /* ── Form elements ───────────────────────────────────────── */
+    .field { margin-bottom: 15px; }
+    .field:last-child { margin-bottom: 0; }
+
+    label.lbl {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 5px;
+      color: var(--text);
+    }
+    label.lbl .req { color: var(--danger); margin-left: 2px; }
+
+    input[type=text], input[type=tel], input[type=date],
+    input[type=number], select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      background: white;
+      color: var(--text);
+      transition: border-color 0.15s, box-shadow 0.15s;
+      appearance: auto;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(217,75,43,0.12);
+    }
+    textarea { resize: vertical; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Pet type grid ───────────────────────────────────────── */
+    .pet-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .pet-card {
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 12px 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      position: relative;
+      user-select: none;
+    }
+    .pet-card:hover { border-color: var(--primary); }
+    .pet-card.on {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    .pet-card input[type=checkbox] {
+      position: absolute;
+      top: 9px; right: 9px;
+      width: 17px; height: 17px;
+      cursor: pointer;
+      accent-color: var(--primary);
+    }
+    .pet-emoji { font-size: 28px; display: block; margin-bottom: 3px; }
+    .pet-name { font-size: 13px; font-weight: 500; }
+
+    .qty-row {
+      display: none;
+      margin-top: 9px;
+      align-items: center;
+      gap: 7px;
+    }
+    .pet-card.on .qty-row { display: flex; }
+    .qty-row span { font-size: 12px; color: var(--muted); white-space: nowrap; }
+    .qty-row input {
+      width: 56px;
+      padding: 5px 8px;
+      font-size: 14px;
+    }
+
+    /* ── Chip checkboxes ─────────────────────────────────────── */
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 13px;
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chip input[type=checkbox] {
+      width: 15px; height: 15px;
+      accent-color: var(--primary);
+    }
+    .chip:has(input:checked) {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    /* ── Other pet reveal ────────────────────────────────────── */
+    .other-reveal { display: none; margin-top: 11px; }
+
+    /* ── Dog size (conditional) ──────────────────────────────── */
+    #dog-size-section { display: none; }
+
+    /* ── Buttons ─────────────────────────────────────────────── */
+    .btn-primary {
+      width: 100%;
+      padding: 15px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-primary:active { transform: scale(0.98); }
+
+    .btn-wa {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      width: 100%;
+      padding: 12px;
+      background: var(--wa);
+      color: white;
+      border: none;
+      border-radius: 9px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .btn-wa:hover { background: var(--wa-dark); }
+
+    .btn-ghost {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid var(--primary);
+      color: var(--primary);
+      background: white;
+      border-radius: 9px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.15s;
+    }
+    .btn-ghost:hover { background: var(--primary-light); }
+
+    /* ── Error / success ─────────────────────────────────────── */
+    .error-box {
+      display: none;
+      background: var(--danger-bg);
+      border-left: 3px solid var(--danger);
+      color: var(--danger);
+      padding: 10px 13px;
+      border-radius: 7px;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .success-box {
+      display: none;
+      background: var(--green-bg);
+      border-radius: var(--radius);
+      padding: 28px 20px;
+      text-align: center;
+    }
+    .success-box .ico { font-size: 52px; margin-bottom: 10px; }
+    .success-box h2 { font-size: 20px; font-weight: 700; color: var(--green); margin-bottom: 6px; }
+    .success-box p { color: #166534; font-size: 14px; margin-bottom: 18px; }
+
+    /* ── Find tab ────────────────────────────────────────────── */
+    .search-box {
+      background: white;
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    }
+    .filter-chips { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
+    .f-chip {
+      padding: 6px 12px;
+      border: 2px solid var(--border);
+      border-radius: 18px;
+      background: white;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .f-chip.on {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: white;
+    }
+
+    /* ── Shelter cards ───────────────────────────────────────── */
+    .shelter-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 15px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+      border-left: 4px solid var(--green);
+    }
+    .sc-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .sc-name { font-weight: 600; font-size: 16px; }
+    .sc-loc { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .badge-avail {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 8px;
+      background: var(--green-bg);
+      color: var(--green);
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .pet-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 9px 0; }
+    .pt {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1px solid #F9C5B3;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .sc-notes {
+      font-size: 13px;
+      color: var(--muted);
+      font-style: italic;
+      margin-bottom: 6px;
+    }
+    .sc-date { font-size: 11px; color: var(--muted); margin-bottom: 11px; }
+    .sc-reqs { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+
+    /* ── Empty / loading ─────────────────────────────────────── */
+    .empty {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--muted);
+    }
+    .empty .e-ico { font-size: 44px; margin-bottom: 10px; }
+
+    /* ── Privacy note ────────────────────────────────────────── */
+    .privacy { font-size: 12px; color: var(--muted); text-align: center; margin-top: 10px; }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 380px) {
+      .pet-grid { grid-template-columns: 1fr; }
+      .chips { gap: 6px; }
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────────── -->
+<header class="header">
+  <div class="header-back">🆘 SOS Juiz de Fora</div>
+  <h1>🐾 Abrigo Temporário para Pets</h1>
+  <p>Conectando animais desalojados com famílias acolhedoras</p>
+</header>
+
+<!-- ── Alert banner ───────────────────────────────────────────── -->
+<div class="alert">
+  ⚠️ <strong>Emergência ativa em JF.</strong> Mais de 3.500 desabrigados e 50 vidas perdidas. Cada abrigo conta.
+</div>
+
+<!-- ── Stats ──────────────────────────────────────────────────── -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-n" id="sn-total">—</div>
+    <div class="stat-l">Abrigos<br>cadastrados</div>
+  </div>
+  <div class="stat">
+    <div class="stat-n" id="sn-dogs">—</div>
+    <div class="stat-l">Vagas<br>p/ cães</div>
+  </div>
+  <div class="stat">
+    <div class="stat-n" id="sn-cats">—</div>
+    <div class="stat-l">Vagas<br>p/ gatos</div>
+  </div>
+  <div class="stat">
+    <div class="stat-n" id="sn-other">—</div>
+    <div class="stat-l">Vagas<br>outros</div>
+  </div>
+</div>
+
+<!-- ── Tabs ───────────────────────────────────────────────────── -->
+<div class="tabs">
+  <button class="tab active" id="tab-offer" onclick="switchTab('offer')">🏠 Oferecer Abrigo</button>
+  <button class="tab" id="tab-find" onclick="switchTab('find')">🔍 Buscar Abrigo</button>
+</div>
+
+<main>
+
+  <!-- ════════════════════════════════════════════════════════════
+       TAB: OFERECER ABRIGO
+       ════════════════════════════════════════════════════════════ -->
+  <div id="view-offer">
+
+    <div id="form-wrap">
+
+      <!-- Dados pessoais -->
+      <div class="card">
+        <div class="card-title">👤 Seus dados de contato</div>
+
+        <div class="field">
+          <label class="lbl" for="f-name">Nome completo <span class="req">*</span></label>
+          <input type="text" id="f-name" placeholder="Como podemos te chamar?" maxlength="80" autocomplete="name">
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="f-phone">WhatsApp <span class="req">*</span></label>
+          <input type="tel" id="f-phone" placeholder="(32) 99999-9999" maxlength="20" autocomplete="tel">
+          <div class="hint">Tutores entrarão em contato por WhatsApp</div>
+        </div>
+      </div>
+
+      <!-- Localização -->
+      <div class="card">
+        <div class="card-title">📍 Localização</div>
+
+        <div class="field">
+          <label class="lbl" for="f-bairro">Bairro <span class="req">*</span></label>
+          <select id="f-bairro">
+            <option value="">Selecione o bairro...</option>
+            <option>Alto dos Passos</option>
+            <option>Bandeirantes</option>
+            <option>Benfica</option>
+            <option>Borboleta</option>
+            <option>Cascatinha</option>
+            <option>Centro</option>
+            <option>Cerâmica</option>
+            <option>Cruzeiro do Sul</option>
+            <option>Fátima</option>
+            <option>Graminha</option>
+            <option>Granbery</option>
+            <option>Igrejinha</option>
+            <option>Industrial</option>
+            <option>Ipiranga</option>
+            <option>Jardim Natal</option>
+            <option>Linhares</option>
+            <option>Manoel Honório</option>
+            <option>Mariano Procópio</option>
+            <option>Monte Castelo</option>
+            <option>Nova Era</option>
+            <option>Paineiras</option>
+            <option>Ramos</option>
+            <option>Santa Cândida</option>
+            <option>Santa Helena</option>
+            <option>Santa Luzia</option>
+            <option>Santa Rita</option>
+            <option>Santo Antônio</option>
+            <option>São Judas Tadeu</option>
+            <option>São Mateus</option>
+            <option>São Pedro</option>
+            <option>Teixeiras</option>
+            <option>Vitorino Braga</option>
+            <option>Outro</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="f-ref">Referência (opcional)</label>
+          <input type="text" id="f-ref" placeholder="Ex: perto da escola X, próximo à praça Y...">
+          <div class="hint">Não compartilhe seu endereço completo por segurança</div>
+        </div>
+      </div>
+
+      <!-- Tipos de animais -->
+      <div class="card">
+        <div class="card-title">🐾 Quais animais você pode abrigar?</div>
+        <div class="hint" style="margin-bottom: 13px;">Selecione um ou mais tipos e informe quantas vagas você tem para cada um</div>
+
+        <div class="pet-grid">
+
+          <div class="pet-card" id="pc-dogs" onclick="togglePet('dogs',event)">
+            <input type="checkbox" id="cb-dogs" onclick="event.stopPropagation()">
+            <span class="pet-emoji">🐶</span>
+            <span class="pet-name">Cães</span>
+            <div class="qty-row">
+              <span>Vagas:</span>
+              <input type="number" id="qty-dogs" min="1" max="30" value="1" onclick="event.stopPropagation()">
+            </div>
+          </div>
+
+          <div class="pet-card" id="pc-cats" onclick="togglePet('cats',event)">
+            <input type="checkbox" id="cb-cats" onclick="event.stopPropagation()">
+            <span class="pet-emoji">🐱</span>
+            <span class="pet-name">Gatos</span>
+            <div class="qty-row">
+              <span>Vagas:</span>
+              <input type="number" id="qty-cats" min="1" max="30" value="1" onclick="event.stopPropagation()">
+            </div>
+          </div>
+
+          <div class="pet-card" id="pc-birds" onclick="togglePet('birds',event)">
+            <input type="checkbox" id="cb-birds" onclick="event.stopPropagation()">
+            <span class="pet-emoji">🐦</span>
+            <span class="pet-name">Pássaros / Aves</span>
+            <div class="qty-row">
+              <span>Vagas:</span>
+              <input type="number" id="qty-birds" min="1" max="30" value="1" onclick="event.stopPropagation()">
+            </div>
+          </div>
+
+          <div class="pet-card" id="pc-rabbits" onclick="togglePet('rabbits',event)">
+            <input type="checkbox" id="cb-rabbits" onclick="event.stopPropagation()">
+            <span class="pet-emoji">🐰</span>
+            <span class="pet-name">Coelhos</span>
+            <div class="qty-row">
+              <span>Vagas:</span>
+              <input type="number" id="qty-rabbits" min="1" max="30" value="1" onclick="event.stopPropagation()">
+            </div>
+          </div>
+
+          <div class="pet-card" id="pc-reptiles" onclick="togglePet('reptiles',event)">
+            <input type="checkbox" id="cb-reptiles" onclick="event.stopPropagation()">
+            <span class="pet-emoji">🦎</span>
+            <span class="pet-name">Répteis</span>
+            <div class="qty-row">
+              <span>Vagas:</span>
+              <input type="number" id="qty-reptiles" min="1" max="30" value="1" onclick="event.stopPropagation()">
+            </div>
+          </div>
+
+          <div class="pet-card" id="pc-others" onclick="togglePet('others',event)">
+            <input type="checkbox" id="cb-others" onclick="event.stopPropagation()">
+            <span class="pet-emoji">🐹</span>
+            <span class="pet-name">Outros animais</span>
+            <div class="qty-row">
+              <span>Vagas:</span>
+              <input type="number" id="qty-others" min="1" max="30" value="1" onclick="event.stopPropagation()">
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Campo "outros" condicional -->
+        <div class="other-reveal" id="other-reveal">
+          <label class="lbl" for="f-other-type">Que tipo de animal? <span class="req">*</span></label>
+          <input type="text" id="f-other-type" placeholder="Ex: hamster, tartaruga, porquinho-da-índia...">
+        </div>
+      </div>
+
+      <!-- Porte dos cães (condicional) -->
+      <div class="card" id="dog-size-section">
+        <div class="card-title">📏 Porte dos cães aceitos</div>
+        <div class="chips">
+          <label class="chip">
+            <input type="checkbox" name="dog-size" value="small" checked>
+            🐕 Pequeno (até 10kg)
+          </label>
+          <label class="chip">
+            <input type="checkbox" name="dog-size" value="medium">
+            🐕 Médio (10–25kg)
+          </label>
+          <label class="chip">
+            <input type="checkbox" name="dog-size" value="large">
+            🐕 Grande (acima de 25kg)
+          </label>
+        </div>
+      </div>
+
+      <!-- Condições -->
+      <div class="card">
+        <div class="card-title">📋 Condições e observações</div>
+
+        <div class="field">
+          <label class="lbl">O animal precisa ser/estar (opcional)</label>
+          <div class="chips">
+            <label class="chip">
+              <input type="checkbox" name="cond" value="vaccinated">
+              💉 Vacinado
+            </label>
+            <label class="chip">
+              <input type="checkbox" name="cond" value="castrated">
+              ✂️ Castrado
+            </label>
+            <label class="chip">
+              <input type="checkbox" name="cond" value="owner-present">
+              👤 Tutor fica junto
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="f-notes">Observações adicionais</label>
+          <textarea id="f-notes" rows="3" placeholder="Ex: tenho um cão adulto na casa, quintal murado, moro em apartamento, sem crianças..."></textarea>
+        </div>
+      </div>
+
+      <!-- Disponibilidade -->
+      <div class="card">
+        <div class="card-title">📅 Disponibilidade</div>
+
+        <div class="field">
+          <label class="lbl" for="f-from">Disponível a partir de <span class="req">*</span></label>
+          <input type="date" id="f-from">
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="f-until">Disponível até (estimado)</label>
+          <input type="date" id="f-until">
+          <div class="hint">Deixe em branco se for indefinido. Pode ser atualizado a qualquer momento.</div>
+        </div>
+      </div>
+
+      <!-- Erro -->
+      <div class="error-box" id="error-box"></div>
+
+      <!-- Submit -->
+      <button class="btn-primary" onclick="submitForm()">
+        🐾 Cadastrar meu abrigo
+      </button>
+      <p class="privacy">Seus dados serão usados exclusivamente para conectar tutores que precisam de ajuda com você.</p>
+    </div>
+
+    <!-- Estado de sucesso -->
+    <div class="success-box" id="success-box">
+      <div class="ico">✅</div>
+      <h2>Abrigo cadastrado!</h2>
+      <p>
+        Obrigado, <strong id="success-name"></strong>!<br>
+        Seu cadastro já está visível para tutores em busca de abrigo.
+        Compartilhe para ajudar mais famílias:
+      </p>
+      <a class="btn-wa" id="wa-share-btn" href="#" target="_blank">
+        📲 Compartilhar no WhatsApp
+      </a>
+      <button class="btn-ghost" onclick="resetForm()">+ Cadastrar outro abrigo</button>
+    </div>
+
+  </div><!-- /view-offer -->
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       TAB: BUSCAR ABRIGO
+       ════════════════════════════════════════════════════════════ -->
+  <div id="view-find" class="hidden">
+
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="🔍 Buscar por bairro ou nome..." oninput="renderShelters()">
+      <div class="filter-chips">
+        <button class="f-chip on" onclick="setFilter('all',this)">Todos</button>
+        <button class="f-chip" onclick="setFilter('dogs',this)">🐶 Cães</button>
+        <button class="f-chip" onclick="setFilter('cats',this)">🐱 Gatos</button>
+        <button class="f-chip" onclick="setFilter('birds',this)">🐦 Aves</button>
+        <button class="f-chip" onclick="setFilter('rabbits',this)">🐰 Coelhos</button>
+        <button class="f-chip" onclick="setFilter('reptiles',this)">🦎 Répteis</button>
+        <button class="f-chip" onclick="setFilter('others',this)">🐹 Outros</button>
+      </div>
+    </div>
+
+    <div id="shelters-list"></div>
+
+  </div><!-- /view-find -->
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   SUPABASE
+   ═══════════════════════════════════════════════════════════════ */
+const { createClient } = window.supabase;
+const db = createClient(
+  'https://vqmoyfykxccgbdknocpp.supabase.co',
+  'sb_publishable_FiwU4AucQkViFZHljphUrA_6v76lEPy'
+);
+
+/* ═══════════════════════════════════════════════════════════════
+   TABS
+   ═══════════════════════════════════════════════════════════════ */
+function switchTab(t) {
+  document.getElementById('view-offer').classList.toggle('hidden', t !== 'offer');
+  document.getElementById('view-find').classList.toggle('hidden', t !== 'find');
+  document.getElementById('tab-offer').classList.toggle('active', t === 'offer');
+  document.getElementById('tab-find').classList.toggle('active', t === 'find');
+  if (t === 'find') renderShelters();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PET TYPE TOGGLE
+   ═══════════════════════════════════════════════════════════════ */
+const PET_TYPES = ['dogs','cats','birds','rabbits','reptiles','others'];
+
+function togglePet(type, e) {
+  // Don't toggle if user clicked number input
+  if (e && e.target.type === 'number') return;
+
+  const cb = document.getElementById('cb-' + type);
+  // If the actual checkbox was clicked, its state is already toggled
+  if (e && e.target !== cb) cb.checked = !cb.checked;
+
+  const card = document.getElementById('pc-' + type);
+  card.classList.toggle('on', cb.checked);
+
+  if (type === 'dogs') {
+    document.getElementById('dog-size-section').style.display = cb.checked ? 'block' : 'none';
+  }
+  if (type === 'others') {
+    document.getElementById('other-reveal').style.display = cb.checked ? 'block' : 'none';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FORM SUBMIT
+   ═══════════════════════════════════════════════════════════════ */
+async function submitForm() {
+  const err = document.getElementById('error-box');
+  err.style.display = 'none';
+
+  const name   = document.getElementById('f-name').value.trim();
+  const phone  = document.getElementById('f-phone').value.trim();
+  const bairro = document.getElementById('f-bairro').value;
+  const from   = document.getElementById('f-from').value;
+
+  const pets = {};
+  PET_TYPES.forEach(t => {
+    if (document.getElementById('cb-' + t).checked)
+      pets[t] = parseInt(document.getElementById('qty-' + t).value) || 1;
+  });
+
+  if (!name)                      return showErr(err, 'Informe seu nome completo.');
+  if (!phone || phone.replace(/\D/g,'').length < 10)
+                                  return showErr(err, 'Informe um WhatsApp válido com DDD (ex: 32 99999-9999).');
+  if (!bairro)                    return showErr(err, 'Selecione o bairro.');
+  if (!Object.keys(pets).length)  return showErr(err, 'Selecione ao menos um tipo de animal.');
+  if (!from)                      return showErr(err, 'Informe a data de disponibilidade.');
+  if (pets.others && !document.getElementById('f-other-type').value.trim())
+                                  return showErr(err, 'Informe que tipo de animal você aceita em "Outros animais".');
+
+  const dogSizes = pets.dogs
+    ? [...document.querySelectorAll('input[name="dog-size"]:checked')].map(el => el.value)
+    : [];
+  const conds = [...document.querySelectorAll('input[name="cond"]:checked')].map(el => el.value);
+
+  const btn = document.querySelector('.btn-primary');
+  btn.disabled = true;
+  btn.textContent = 'Salvando...';
+
+  const { error } = await db.from('pet_shelters').insert({
+    name, phone, bairro,
+    address_ref:     document.getElementById('f-ref').value.trim(),
+    pets,
+    dog_sizes:       dogSizes,
+    conds,
+    notes:           document.getElementById('f-notes').value.trim(),
+    available_from:  from,
+    available_until: document.getElementById('f-until').value || null,
+    other_type:      document.getElementById('f-other-type').value.trim(),
+  });
+
+  btn.disabled = false;
+  btn.innerHTML = '🐾 Cadastrar meu abrigo';
+
+  if (error) return showErr(err, 'Erro ao salvar. Tente novamente. (' + error.message + ')');
+
+  showSuccess(name);
+  updateStats();
+}
+
+function showErr(el, msg) {
+  el.textContent = '⚠️ ' + msg;
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function showSuccess(name) {
+  document.getElementById('form-wrap').classList.add('hidden');
+  const box = document.getElementById('success-box');
+  box.style.display = 'block';
+  document.getElementById('success-name').textContent = name.split(' ')[0];
+  const msg = encodeURIComponent('🐾 Me cadastrei para oferecer abrigo temporário para pets no SOS Juiz de Fora! Se você precisa de um lar temporário para seu animal, acesse: https://sosjuizdefora.com.br');
+  document.getElementById('wa-share-btn').href = 'https://wa.me/?text=' + msg;
+}
+
+function resetForm() {
+  document.getElementById('success-box').style.display = 'none';
+  document.getElementById('form-wrap').classList.remove('hidden');
+
+  // Reset inputs
+  ['f-name','f-phone','f-bairro','f-ref','f-notes','f-until','f-other-type']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = el.tagName === 'SELECT' ? '' : ''; });
+  document.getElementById('f-from').value = today();
+
+  // Reset pet cards
+  PET_TYPES.forEach(t => {
+    document.getElementById('cb-' + t).checked = false;
+    document.getElementById('pc-' + t).classList.remove('on');
+  });
+  document.getElementById('dog-size-section').style.display = 'none';
+  document.getElementById('other-reveal').style.display = 'none';
+  document.getElementById('error-box').style.display = 'none';
+
+  // Reset size/cond checkboxes
+  document.querySelectorAll('input[name="dog-size"]').forEach((el,i) => el.checked = i === 0);
+  document.querySelectorAll('input[name="cond"]').forEach(el => el.checked = false);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FIND / FILTER
+   ═══════════════════════════════════════════════════════════════ */
+let activeFilter = 'all';
+
+function setFilter(type, btn) {
+  activeFilter = type;
+  document.querySelectorAll('.f-chip').forEach(el => el.classList.remove('on'));
+  btn.classList.add('on');
+  renderShelters();
+}
+
+const PET_META = {
+  dogs:     { emoji:'🐶', label:'Cão/Cães' },
+  cats:     { emoji:'🐱', label:'Gato/Gatos' },
+  birds:    { emoji:'🐦', label:'Pássaro/Aves' },
+  rabbits:  { emoji:'🐰', label:'Coelho/Coelhos' },
+  reptiles: { emoji:'🦎', label:'Réptil/Répteis' },
+  others:   { emoji:'🐹', label:'Outros' },
+};
+const SIZE_LBL = { small:'Pequeno porte', medium:'Médio porte', large:'Grande porte' };
+const COND_LBL = { vaccinated:'💉 Vacinado', castrated:'✂️ Castrado', 'owner-present':'👤 Tutor fica junto' };
+
+async function renderShelters() {
+  const list = document.getElementById('shelters-list');
+  list.innerHTML = '<div class="empty"><div class="e-ico">⏳</div>Carregando...</div>';
+
+  const { data, error } = await db
+    .from('pet_shelters')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    list.innerHTML = '<div class="empty">Erro ao carregar os abrigos. Tente novamente.</div>';
+    return;
+  }
+
+  const q = document.getElementById('search-input').value.toLowerCase().trim();
+  let shelters = data || [];
+
+  if (activeFilter !== 'all') shelters = shelters.filter(s => s.pets && s.pets[activeFilter]);
+  if (q) shelters = shelters.filter(s =>
+    s.bairro.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
+  );
+
+  if (!shelters.length) {
+    list.innerHTML = `
+      <div class="empty">
+        <div class="e-ico">🐾</div>
+        <strong>Nenhum abrigo encontrado</strong>
+        <div style="font-size:13px;margin-top:8px">Seja o primeiro a oferecer abrigo na sua região!</div>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = shelters.map(s => {
+    const ptags = Object.entries(s.pets || {}).map(([t, qty]) => {
+      const m = PET_META[t] || { emoji:'🐾', label: t };
+      let extra = '';
+      if (t === 'dogs' && s.dog_sizes?.length)
+        extra = ` (${s.dog_sizes.map(x => SIZE_LBL[x]).join(', ')})`;
+      if ((t === 'others' || t === 'reptiles') && s.other_type)
+        extra = ` – ${esc(s.other_type)}`;
+      return `<span class="pt">${m.emoji} ${qty} vaga${qty > 1 ? 's' : ''} ${m.label}${extra}</span>`;
+    }).join('');
+
+    const reqStr = (s.conds || []).map(c => COND_LBL[c] || c).join(' · ');
+    const phone  = (s.phone || '').replace(/\D/g, '');
+    const wamsg  = encodeURIComponent(`Olá ${s.name.split(' ')[0]}! Vi seu cadastro no SOS Juiz de Fora oferecendo abrigo para pets. Preciso de ajuda para meu animal. Você ainda pode ajudar?`);
+
+    return `
+    <div class="shelter-card">
+      <div class="sc-head">
+        <div>
+          <div class="sc-name">${esc(s.name)}</div>
+          <div class="sc-loc">📍 ${esc(s.bairro)}${s.address_ref ? ' · ' + esc(s.address_ref) : ''}</div>
+        </div>
+        <span class="badge-avail">✅ Disponível</span>
+      </div>
+      <div class="pet-tags">${ptags}</div>
+      ${reqStr ? `<div class="sc-reqs">Requisitos: ${reqStr}</div>` : ''}
+      ${s.notes ? `<div class="sc-notes">"${esc(s.notes)}"</div>` : ''}
+      ${s.available_from ? `<div class="sc-date">📅 A partir de ${fmtDate(s.available_from)}${s.available_until ? ' até ' + fmtDate(s.available_until) : ''}</div>` : ''}
+      <a class="btn-wa" href="https://wa.me/55${phone}?text=${wamsg}" target="_blank" rel="noopener">
+        💬 Entrar em contato pelo WhatsApp
+      </a>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STATS
+   ═══════════════════════════════════════════════════════════════ */
+async function updateStats() {
+  const { data } = await db.from('pet_shelters').select('pets');
+  if (!data) return;
+  let dogs = 0, cats = 0, other = 0;
+  data.forEach(s => {
+    if (!s.pets) return;
+    dogs  += s.pets.dogs     || 0;
+    cats  += s.pets.cats     || 0;
+    other += (s.pets.birds   || 0) + (s.pets.rabbits  || 0)
+           + (s.pets.reptiles|| 0) + (s.pets.others   || 0);
+  });
+  document.getElementById('sn-total').textContent = data.length;
+  document.getElementById('sn-dogs').textContent  = dogs;
+  document.getElementById('sn-cats').textContent  = cats;
+  document.getElementById('sn-other').textContent = other;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UTILS
+   ═══════════════════════════════════════════════════════════════ */
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+function fmtDate(s) {
+  if (!s) return '';
+  const [y, m, d] = s.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════════ */
+document.getElementById('f-from').value = today();
+updateStats();
+</script>
+
+</body>
+</html>
