@@ -458,6 +458,53 @@
     }
 
     .hidden { display: none !important; }
+
+    /* ── Sub-tabs buscar ─────────────────────────────────────── */
+    .sub-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .sub-tab {
+      flex: 1;
+      padding: 10px 8px;
+      border: 2px solid var(--border);
+      border-radius: 9px;
+      background: white;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+    .sub-tab.active {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    /* ── Request cards ───────────────────────────────────────── */
+    .request-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 15px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+      border-left: 4px solid var(--amber);
+    }
+    .badge-request {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 8px;
+      background: #FFFBEB;
+      color: #92400E;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
   </style>
 </head>
 <body>
@@ -496,8 +543,9 @@
 
 <!-- ── Tabs ───────────────────────────────────────────────────── -->
 <div class="tabs">
-  <button class="tab active" id="tab-offer" onclick="switchTab('offer')">🏠 Oferecer Abrigo</button>
-  <button class="tab" id="tab-find" onclick="switchTab('find')">🔍 Buscar Abrigo</button>
+  <button class="tab active" id="tab-offer" onclick="switchTab('offer')">🏠 Oferecer</button>
+  <button class="tab" id="tab-request" onclick="switchTab('request')">🆘 Preciso</button>
+  <button class="tab" id="tab-find" onclick="switchTab('find')">🔍 Buscar</button>
 </div>
 
 <main>
@@ -744,13 +792,158 @@
 
 
   <!-- ════════════════════════════════════════════════════════════
-       TAB: BUSCAR ABRIGO
+       TAB: PRECISO DE ABRIGO
+       ════════════════════════════════════════════════════════════ -->
+  <div id="view-request" class="hidden">
+
+    <div id="req-form-wrap">
+
+      <div class="card">
+        <div class="card-title">👤 Seus dados de contato</div>
+        <div class="field">
+          <label class="lbl" for="r-name">Nome completo <span class="req">*</span></label>
+          <input type="text" id="r-name" placeholder="Como podemos te chamar?" maxlength="80" autocomplete="name">
+        </div>
+        <div class="field">
+          <label class="lbl" for="r-phone">WhatsApp <span class="req">*</span></label>
+          <input type="tel" id="r-phone" placeholder="(32) 99999-9999" maxlength="20" autocomplete="tel">
+          <div class="hint">Quem puder ajudar entrará em contato por WhatsApp</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📍 Localização atual</div>
+        <div class="field">
+          <label class="lbl" for="r-bairro">Bairro <span class="req">*</span></label>
+          <select id="r-bairro">
+            <option value="">Selecione o bairro...</option>
+            <option>Alto dos Passos</option><option>Bandeirantes</option>
+            <option>Benfica</option><option>Borboleta</option>
+            <option>Cascatinha</option><option>Centro</option>
+            <option>Cerâmica</option><option>Cruzeiro do Sul</option>
+            <option>Fátima</option><option>Graminha</option>
+            <option>Granbery</option><option>Igrejinha</option>
+            <option>Industrial</option><option>Ipiranga</option>
+            <option>Jardim Natal</option><option>Linhares</option>
+            <option>Manoel Honório</option><option>Mariano Procópio</option>
+            <option>Monte Castelo</option><option>Nova Era</option>
+            <option>Paineiras</option><option>Ramos</option>
+            <option>Santa Cândida</option><option>Santa Helena</option>
+            <option>Santa Luzia</option><option>Santa Rita</option>
+            <option>Santo Antônio</option><option>São Judas Tadeu</option>
+            <option>São Mateus</option><option>São Pedro</option>
+            <option>Teixeiras</option><option>Vitorino Braga</option>
+            <option>Outro</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🐾 Quais animais precisam de abrigo?</div>
+        <div class="hint" style="margin-bottom:13px">Selecione os tipos e informe a quantidade de cada um</div>
+
+        <div class="pet-grid">
+          <div class="pet-card" id="rpc-dogs" onclick="toggleReqPet('dogs',event)">
+            <input type="checkbox" id="rcb-dogs" onclick="event.stopPropagation()">
+            <span class="pet-emoji">🐶</span><span class="pet-name">Cães</span>
+            <div class="qty-row"><span>Qtd:</span>
+              <input type="number" id="rqty-dogs" min="1" max="20" value="1" onclick="event.stopPropagation()">
+            </div>
+          </div>
+          <div class="pet-card" id="rpc-cats" onclick="toggleReqPet('cats',event)">
+            <input type="checkbox" id="rcb-cats" onclick="event.stopPropagation()">
+            <span class="pet-emoji">🐱</span><span class="pet-name">Gatos</span>
+            <div class="qty-row"><span>Qtd:</span>
+              <input type="number" id="rqty-cats" min="1" max="20" value="1" onclick="event.stopPropagation()">
+            </div>
+          </div>
+          <div class="pet-card" id="rpc-birds" onclick="toggleReqPet('birds',event)">
+            <input type="checkbox" id="rcb-birds" onclick="event.stopPropagation()">
+            <span class="pet-emoji">🐦</span><span class="pet-name">Pássaros / Aves</span>
+            <div class="qty-row"><span>Qtd:</span>
+              <input type="number" id="rqty-birds" min="1" max="20" value="1" onclick="event.stopPropagation()">
+            </div>
+          </div>
+          <div class="pet-card" id="rpc-rabbits" onclick="toggleReqPet('rabbits',event)">
+            <input type="checkbox" id="rcb-rabbits" onclick="event.stopPropagation()">
+            <span class="pet-emoji">🐰</span><span class="pet-name">Coelhos</span>
+            <div class="qty-row"><span>Qtd:</span>
+              <input type="number" id="rqty-rabbits" min="1" max="20" value="1" onclick="event.stopPropagation()">
+            </div>
+          </div>
+          <div class="pet-card" id="rpc-reptiles" onclick="toggleReqPet('reptiles',event)">
+            <input type="checkbox" id="rcb-reptiles" onclick="event.stopPropagation()">
+            <span class="pet-emoji">🦎</span><span class="pet-name">Répteis</span>
+            <div class="qty-row"><span>Qtd:</span>
+              <input type="number" id="rqty-reptiles" min="1" max="20" value="1" onclick="event.stopPropagation()">
+            </div>
+          </div>
+          <div class="pet-card" id="rpc-others" onclick="toggleReqPet('others',event)">
+            <input type="checkbox" id="rcb-others" onclick="event.stopPropagation()">
+            <span class="pet-emoji">🐹</span><span class="pet-name">Outros animais</span>
+            <div class="qty-row"><span>Qtd:</span>
+              <input type="number" id="rqty-others" min="1" max="20" value="1" onclick="event.stopPropagation()">
+            </div>
+          </div>
+        </div>
+
+        <div class="other-reveal" id="r-other-reveal">
+          <label class="lbl" for="r-other-type">Que tipo de animal? <span class="req">*</span></label>
+          <input type="text" id="r-other-type" placeholder="Ex: hamster, tartaruga...">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📋 Observações</div>
+        <div class="field">
+          <label class="lbl" for="r-notes">Informações importantes sobre o animal</label>
+          <textarea id="r-notes" rows="3" placeholder="Ex: cão idoso, gato com medicação diária, animal assustado, não pode ficar com outros animais..."></textarea>
+        </div>
+        <div class="field">
+          <label class="lbl" for="r-until">Precisa de abrigo até</label>
+          <input type="date" id="r-until">
+          <div class="hint">Deixe em branco se não souber.</div>
+        </div>
+      </div>
+
+      <div class="error-box" id="r-error-box"></div>
+
+      <button class="btn-primary" onclick="submitRequest()">
+        🆘 Cadastrar pedido de abrigo
+      </button>
+      <p class="privacy">Seus dados serão usados apenas para conectar você com quem pode ajudar.</p>
+    </div>
+
+    <div class="success-box" id="req-success-box">
+      <div class="ico">✅</div>
+      <h2>Pedido cadastrado!</h2>
+      <p>
+        Obrigado, <strong id="req-success-name"></strong>!<br>
+        Seu pedido está visível para quem oferece abrigo.
+        Compartilhe para aumentar as chances:
+      </p>
+      <a class="btn-wa" id="req-wa-share" href="#" target="_blank">
+        📲 Compartilhar no WhatsApp
+      </a>
+      <button class="btn-ghost" onclick="resetRequest()">+ Cadastrar outro pedido</button>
+    </div>
+
+  </div><!-- /view-request -->
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       TAB: BUSCAR
        ════════════════════════════════════════════════════════════ -->
   <div id="view-find" class="hidden">
 
+    <div class="sub-tabs">
+      <button class="sub-tab active" id="sub-shelters" onclick="switchSubTab('shelters')">🏠 Abrigos disponíveis</button>
+      <button class="sub-tab" id="sub-requests" onclick="switchSubTab('requests')">🆘 Pedidos de abrigo</button>
+    </div>
+
     <div class="search-box">
-      <input type="text" id="search-input" placeholder="🔍 Buscar por bairro ou nome..." oninput="renderShelters()">
-      <div class="filter-chips">
+      <input type="text" id="search-input" placeholder="🔍 Buscar por bairro ou nome..." oninput="onSearch()">
+      <div class="filter-chips" id="filter-chips">
         <button class="f-chip on" onclick="setFilter('all',this)">Todos</button>
         <button class="f-chip" onclick="setFilter('dogs',this)">🐶 Cães</button>
         <button class="f-chip" onclick="setFilter('cats',this)">🐱 Gatos</button>
@@ -781,11 +974,28 @@ const db = createClient(
    TABS
    ═══════════════════════════════════════════════════════════════ */
 function switchTab(t) {
-  document.getElementById('view-offer').classList.toggle('hidden', t !== 'offer');
-  document.getElementById('view-find').classList.toggle('hidden', t !== 'find');
-  document.getElementById('tab-offer').classList.toggle('active', t === 'offer');
-  document.getElementById('tab-find').classList.toggle('active', t === 'find');
-  if (t === 'find') renderShelters();
+  ['offer','request','find'].forEach(id => {
+    document.getElementById('view-' + id).classList.toggle('hidden', t !== id);
+    document.getElementById('tab-' + id).classList.toggle('active', t === id);
+  });
+  if (t === 'find') renderCurrent();
+}
+
+let activeSubTab = 'shelters';
+function switchSubTab(st) {
+  activeSubTab = st;
+  document.getElementById('sub-shelters').classList.toggle('active', st === 'shelters');
+  document.getElementById('sub-requests').classList.toggle('active', st === 'requests');
+  // reset filter
+  document.querySelectorAll('.f-chip').forEach((el,i) => el.classList.toggle('on', i === 0));
+  activeFilter = 'all';
+  renderCurrent();
+}
+
+function onSearch() { renderCurrent(); }
+function renderCurrent() {
+  if (activeSubTab === 'shelters') renderShelters();
+  else renderRequests();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -810,6 +1020,14 @@ function togglePet(type, e) {
   if (type === 'others') {
     document.getElementById('other-reveal').style.display = cb.checked ? 'block' : 'none';
   }
+}
+
+function toggleReqPet(type, e) {
+  if (e && e.target.type === 'number') return;
+  const cb = document.getElementById('rcb-' + type);
+  if (e && e.target !== cb) cb.checked = !cb.checked;
+  document.getElementById('rpc-' + type).classList.toggle('on', cb.checked);
+  if (type === 'others') document.getElementById('r-other-reveal').style.display = cb.checked ? 'block' : 'none';
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -905,6 +1123,166 @@ function resetForm() {
   // Reset size/cond checkboxes
   document.querySelectorAll('input[name="dog-size"]').forEach((el,i) => el.checked = i === 0);
   document.querySelectorAll('input[name="cond"]').forEach(el => el.checked = false);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PEDIDO DE ABRIGO
+   ═══════════════════════════════════════════════════════════════ */
+async function submitRequest() {
+  const err = document.getElementById('r-error-box');
+  err.style.display = 'none';
+
+  const name   = document.getElementById('r-name').value.trim();
+  const phone  = document.getElementById('r-phone').value.trim();
+  const bairro = document.getElementById('r-bairro').value;
+
+  const pets = {};
+  PET_TYPES.forEach(t => {
+    if (document.getElementById('rcb-' + t).checked)
+      pets[t] = parseInt(document.getElementById('rqty-' + t).value) || 1;
+  });
+
+  if (!name)                     return showErr(err, 'Informe seu nome completo.');
+  if (!phone || phone.replace(/\D/g,'').length < 10)
+                                 return showErr(err, 'Informe um WhatsApp válido com DDD.');
+  if (!bairro)                   return showErr(err, 'Selecione o bairro.');
+  if (!Object.keys(pets).length) return showErr(err, 'Selecione ao menos um tipo de animal.');
+  if (pets.others && !document.getElementById('r-other-type').value.trim())
+                                 return showErr(err, 'Informe que tipo de animal em "Outros animais".');
+
+  const btn = document.querySelector('#req-form-wrap .btn-primary');
+  btn.disabled = true;
+  btn.textContent = 'Salvando...';
+
+  const { error } = await db.from('pet_requests').insert({
+    name, phone, bairro,
+    pets,
+    notes:        document.getElementById('r-notes').value.trim(),
+    needed_until: document.getElementById('r-until').value || null,
+    other_type:   document.getElementById('r-other-type').value.trim(),
+  });
+
+  btn.disabled = false;
+  btn.innerHTML = '🆘 Cadastrar pedido de abrigo';
+
+  if (error) return showErr(err, 'Erro ao salvar. Tente novamente. (' + error.message + ')');
+
+  document.getElementById('req-form-wrap').classList.add('hidden');
+  document.getElementById('req-success-box').style.display = 'block';
+  document.getElementById('req-success-name').textContent = name.split(' ')[0];
+  const msg = encodeURIComponent('🆘 Preciso de abrigo temporário para meu pet em JF! Se puder ajudar, acesse: https://sosjuizdefora.com.br');
+  document.getElementById('req-wa-share').href = 'https://wa.me/?text=' + msg;
+}
+
+function resetRequest() {
+  document.getElementById('req-success-box').style.display = 'none';
+  document.getElementById('req-form-wrap').classList.remove('hidden');
+  ['r-name','r-phone','r-notes','r-until','r-other-type']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('r-bairro').value = '';
+  PET_TYPES.forEach(t => {
+    document.getElementById('rcb-' + t).checked = false;
+    document.getElementById('rpc-' + t).classList.remove('on');
+  });
+  document.getElementById('r-other-reveal').style.display = 'none';
+  document.getElementById('r-error-box').style.display = 'none';
+}
+
+async function renderRequests() {
+  const list = document.getElementById('shelters-list');
+  list.innerHTML = '<div class="empty"><div class="e-ico">⏳</div>Carregando...</div>';
+
+  const { data, error } = await db
+    .from('pet_requests')
+    .select('*')
+    .eq('available', true)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    list.innerHTML = '<div class="empty">Erro ao carregar. Tente novamente.</div>';
+    return;
+  }
+
+  const q = document.getElementById('search-input').value.toLowerCase().trim();
+  let requests = data || [];
+  if (activeFilter !== 'all') requests = requests.filter(r => r.pets && r.pets[activeFilter]);
+  if (q) requests = requests.filter(r =>
+    r.bairro.toLowerCase().includes(q) || r.name.toLowerCase().includes(q)
+  );
+
+  if (!requests.length) {
+    list.innerHTML = `
+      <div class="empty">
+        <div class="e-ico">🐾</div>
+        <strong>Nenhum pedido encontrado</strong>
+        <div style="font-size:13px;margin-top:8px">Nenhum tutor pedindo abrigo no momento.</div>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = requests.map(r => {
+    const ptags = Object.entries(r.pets || {}).map(([t, qty]) => {
+      const m = PET_META[t] || { emoji:'🐾', label: t };
+      const extra = (t === 'others' || t === 'reptiles') && r.other_type ? ` – ${esc(r.other_type)}` : '';
+      return `<span class="pt">${m.emoji} ${qty} ${m.label}${extra}</span>`;
+    }).join('');
+
+    const phone = (r.phone || '').replace(/\D/g, '');
+    const wamsg = encodeURIComponent(`Olá ${r.name.split(' ')[0]}! Vi seu pedido de abrigo para pets no SOS Juiz de Fora. Posso ajudar com o abrigo do seu animal!`);
+
+    return `
+    <div class="request-card">
+      <div class="sc-head">
+        <div>
+          <div class="sc-name">${esc(r.name)}</div>
+          <div class="sc-loc">📍 ${esc(r.bairro)}</div>
+        </div>
+        <span class="badge-request">🆘 Precisa de abrigo</span>
+      </div>
+      <div class="pet-tags">${ptags}</div>
+      ${r.notes ? `<div class="sc-notes">"${esc(r.notes)}"</div>` : ''}
+      ${r.needed_until ? `<div class="sc-date">📅 Precisa até ${fmtDate(r.needed_until)}</div>` : ''}
+      <a class="btn-wa" href="https://wa.me/55${phone}?text=${wamsg}" target="_blank" rel="noopener">
+        💬 Oferecer ajuda pelo WhatsApp
+      </a>
+      <button class="btn-encerrar" onclick="toggleEncerrar('renc-${r.id}')">
+        Marcar como resolvido
+      </button>
+      <div class="encerrar-form" id="renc-${r.id}">
+        <p>✅ Confirme seu WhatsApp para encerrar este pedido:</p>
+        <input type="tel" id="renc-phone-${r.id}" placeholder="(32) 99999-9999">
+        <button class="btn-confirmar-enc" onclick="encerrarRequest(${r.id}, '${r.phone}', 'renc-${r.id}')">
+          Confirmar
+        </button>
+        <div class="enc-erro" id="renc-erro-${r.id}">Número incorreto. Tente novamente.</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function encerrarRequest(id, phoneRegistrado, formId) {
+  const input = document.getElementById('renc-phone-' + id);
+  const erroEl = document.getElementById('renc-erro-' + id);
+  erroEl.style.display = 'none';
+
+  if (input.value.replace(/\D/g,'') !== phoneRegistrado.replace(/\D/g,'')) {
+    erroEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.querySelector(`#${formId} .btn-confirmar-enc`);
+  btn.textContent = 'Encerrando...';
+  btn.disabled = true;
+
+  const { error } = await db.from('pet_requests').update({ available: false }).eq('id', id);
+  if (error) {
+    erroEl.textContent = 'Erro ao encerrar. Tente novamente.';
+    erroEl.style.display = 'block';
+    btn.textContent = 'Confirmar';
+    btn.disabled = false;
+    return;
+  }
+  renderRequests();
 }
 
 /* ═══════════════════════════════════════════════════════════════
